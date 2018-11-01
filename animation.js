@@ -117,14 +117,12 @@ function PopMatrices() {
 
 
 function setMatrixUniforms() {
-    // gl.useProgram(shaderProgram);
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
     gl.uniformMatrix4fv(shaderProgram.invMatrixUniform, false, invMatrix);
 }
 
 function setReflectUniforms(params) {
-    // gl.useProgram(shaderProgram);
     gl.uniform1f(shaderProgram.ambReflectUniform, params[0]);
     gl.uniform1f(shaderProgram.diffReflectUniform, params[1]);
     gl.uniform1f(shaderProgram.specReflectUniform, params[2]);
@@ -228,6 +226,9 @@ var all_scale = [[],[],[]];
 var all_rot = [[],[],[]];
 var all_shear = [[],[],[]];
 
+var lamp_pos = [[],[],[]];
+var lamp_rgb = [[],[],[]];
+
 var spinAngle = 180;
 var spinInterval = 0.03;
 var rgb = [1., 0., 0.];
@@ -265,16 +266,6 @@ function resetslide(){
         zz.value = Math.round(shear[2]*500+500);
     }
 }
-function reset(){
-    spinAngle = 180;
-    for (var i = 0; i < all_default.length; i++){
-        all_trans[i] = all_default[i].slice(0, 3);
-        all_scale[i] = [1.0, 1.0, 1.0];
-        all_rot[i] = [90, 180, 0];
-        all_shear[i] = [0, 0, 0];
-    }
-    resetslide();
-}
 function changeSlide(ele){
     var model = document.getElementById("sel_model").value;
     var transform = document.getElementById("sel_transform").value;
@@ -297,6 +288,62 @@ function changeSlide(ele){
         all_shear[model][axis] = (ele.value - 500) / 500;
     }
 }
+function resetlampslide(){
+    var xx = document.getElementById("slide2_x");
+    var yy = document.getElementById("slide2_y");
+    var zz = document.getElementById("slide2_z");
+    var lamp = document.getElementById("sel_lamp").value;
+    var mode = document.getElementById("sel_lamp_mod").value;
+    
+    var pos, rgb;
+
+    pos = lamp_pos[lamp];
+    rgb = lamp_rgb[lamp];
+
+    if(mode=="pos"){
+    	xx.value = Math.round(pos[0]*100+500);
+        yy.value = Math.round(pos[1]*100+500);
+        zz.value = Math.round(pos[2]*100+500);
+    }else if(mode=="rgb"){
+        xx.value = Math.round(rgb[0]*1000);
+        yy.value = Math.round(rgb[1]*1000);
+        zz.value = Math.round(rgb[2]*1000);
+    }
+}
+function lampslidechange(ele){
+    var lamp = document.getElementById("sel_lamp").value;
+    var mode = document.getElementById("sel_lamp_mod").value;
+
+    var axis = 0;
+    if(ele.id=="slide2_x"){
+        axis = 0;
+    }else if(ele.id=="slide2_y"){
+        axis = 1;
+    }else if(ele.id=="slide2_z"){
+        axis = 2;
+    }
+
+    if(mode=="pos"){
+        lamp_pos[lamp][axis] = (ele.value - 500)/100;
+    }else if(mode=="rgb"){
+        lamp_rgb[lamp][axis] = ele.value / 1000;
+    }
+}
+function reset(){
+    spinAngle = 180;
+    for (var i = 0; i < all_default.length; i++){
+        all_trans[i] = all_default[i].slice(0, 3);
+        all_scale[i] = [1.0, 1.0, 1.0];
+        all_rot[i] = [90, 180, 0];
+        all_shear[i] = [0, 0, 0];
+    }
+    for (var i = 0; i < lamp_pos.length; i++){
+        lamp_pos[i] = [0.,0.,0.];
+        lamp_rgb[i] = [1.,1.,1.];
+    }
+    resetslide();
+    resetlampslide();
+}
 
 mat4.shear=function(a,b){
     mat4.multiply(a, [1, b[0], b[1], 0, 0, 1, b[2], 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -307,7 +354,8 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    SetLights([[0., 2., -1.], [2., 5., -5.], [5., 0., -5.]], [[1.0,1.0,1.0], rgb, [3.0,3.0,3.0]]);
+    // SetLights([[0., 2., -1.], [2., 5., -5.], [5., 0., -5.]], [[1.0,1.0,1.0], rgb, [3.0,3.0,3.0]]);
+    SetLights(lamp_pos, lamp_rgb);
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 150.0, pMatrix);
     mat4.identity(mvMatrix);
 
@@ -360,7 +408,7 @@ function drawScene() {
 var lastTime = 0;
 var startTime = 0;
 var counter = 0;
-var inter = 100;
+var inter = 75;
 var d_red = [0, -1, 0, 0, 1, 0]
 var d_grn = [1, 0, 0, -1, 0, 0]
 var d_blu = [0, 0, 1, 0, 0, -1]

@@ -235,9 +235,9 @@
     	return a;
 	}
 	vec3 stepvec(vec3 a){
-    	const float stp = 0.25;
+    	const float stp = 0.2;
     	const float cap = 5.0;    	
-    	const float dil = 0.75;   	
+    	const float dil = 0.87;   	
     	// cap(x/cap)^(1/dil)
     	for(int i = 0; i < 3; i++)
     		a[i] = floor(pow(clamp(a[i], 0.0, cap)/cap, dil)*cap/stp)*stp;
@@ -308,19 +308,19 @@
     <button onclick="change_spin(0.03)">&rarr;</button>
     <button onclick="change_spin(0)">Stop</button>
     <button onclick="reset()">Reset</button>
+    <select id="sel_shader" onchange="changeShader()">
+          <option value="flat">Flat Shading</option>
+          <option value="gouraud">Gouraud Shading</option>
+          <option value="phong">Phong Shading</option>
+          <option value="toon">Toon Shading</option>
+        </select>
     <br/>
     <div class="slidecontainer">
        	<select id="sel_model" onchange="resetslide()">
           <option value="0" id="model_0">EMPTY</option>
           <option value="1" id="model_1">EMPTY</option>
           <option value="2" id="model_2">EMPTY</option>
-        </select>
-        <select id="sel_shader" onchange="changeShader()">
-          <option value="flat">Flat Shading</option>
-          <option value="gouraud">Gouraud Shading</option>
-          <option value="phong">Phong Shading</option>
-          <option value="toon">Toon Shading</option>
-        </select>
+        </select>        
         <select id="sel_transform" onchange="resetslide()">
           <option value="scale">Scale</option>
           <option value="trans">Translation</option>
@@ -332,6 +332,20 @@
         <input type="range" min="1" max="1000" value="500" id="slide_x" oninput="changeSlide(this)">
         <input type="range" min="1" max="1000" value="500" id="slide_y" oninput="changeSlide(this)">
         <input type="range" min="1" max="1000" value="500" id="slide_z" oninput="changeSlide(this)">
+        <br/>
+        <select id="sel_lamp" onchange="resetlampslide()">
+          <option value="0">Light Source 1</option>
+          <option value="1">Light Source 2</option>
+          <option value="2">Light Source 3</option>
+        </select>
+        <select id="sel_lamp_mod" onchange="resetlampslide()">
+          <option value="rgb">Color</option>
+          <option value="pos">Position</option>
+        </select>
+        <br/>
+        <input type="range" min="1" max="1000" value="500" id="slide2_x" oninput="lampslidechange(this)">
+        <input type="range" min="1" max="1000" value="500" id="slide2_y" oninput="lampslidechange(this)">
+        <input type="range" min="1" max="1000" value="500" id="slide2_z" oninput="lampslidechange(this)">
     </div>
     <!-- <a href="https://www.csie.ntu.edu.tw/~b05902064/hidden/">compare</a> -->
     
