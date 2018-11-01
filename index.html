@@ -1,0 +1,341 @@
+<html>
+
+<head>
+<title>ICG WebGL &mdash; HW1</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="webgl-utils.js"></script>
+
+<script id="flatFrag" type="fragment">
+	#extension GL_OES_standard_derivatives : enable
+    precision mediump float;
+
+	uniform vec3 LightSource[3];
+	uniform vec3 Ip[3];
+
+	uniform float Ka;
+	uniform float Kd;
+	uniform float Ks;
+	uniform float n;
+
+    varying vec4 fragcolor;
+    varying vec4 worldPos;
+    varying vec3 norm;
+
+    vec3 clamp(vec3 a){
+    	for(int i = 0; i < 3; i++)
+    		a[i] = clamp(a[i], 0.0, a[i]);
+    	return a;
+	}
+
+    void main(void) {
+    	vec3 ux = dFdx(worldPos.xyz);
+    	vec3 uy = dFdy(worldPos.xyz);
+    	vec3 N = normalize(cross(ux, uy));
+    	vec3 V = normalize(vec3(0) - worldPos.xyz);
+    	const float Ia = 0.2;
+
+		// ambients
+		vec3 I_amb = vec3(Ia * Ka);
+		vec3 I_diff = vec3(0.0);
+		vec3 I_spec = vec3(0.0);
+
+    	for(int i = 0; i < 3; i++){
+    		vec3 L = normalize(LightSource[i] - worldPos.xyz);	    
+			vec3 H = normalize(L+V);
+
+			// diffuse
+			I_diff += clamp(Kd * Ip[i] * dot(N,L));
+
+			// specular	    
+			float COS = clamp(dot(N, H), 0.0, 1.0);
+			I_spec += Ks * Ip[i] * pow(COS, n);
+    	}    	
+
+        gl_FragColor = vec4((I_diff+I_amb+I_spec) * fragcolor.rgb, 1.0);
+    }
+</script>
+
+<script id="flatVert" type="vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec3 aFrontColor;
+	attribute vec3 aVertexNormal;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+
+	varying vec4 fragcolor;
+	varying vec4 worldPos;
+	varying vec3 norm;
+
+	void main(void) {
+		norm = aVertexNormal;
+		worldPos = uMVMatrix * vec4(aVertexPosition, 1.0);
+	    gl_Position = uPMatrix * worldPos;
+	    fragcolor = vec4(aFrontColor, 1.0);
+	}
+</script>
+
+<script id="gouraudFrag" type="fragment">
+    precision mediump float;
+    varying vec4 fragcolor;
+    void main(void) {
+        gl_FragColor = fragcolor;
+    }
+</script>
+
+<script id="gouraudVert" type="vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec3 aFrontColor;
+	attribute vec3 aVertexNormal;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat4 invMatrix;
+
+	uniform vec3 LightSource[3];
+	uniform vec3 Ip[3];
+
+	uniform float Ka;
+	uniform float Kd;
+	uniform float Ks;
+	uniform float n;
+
+	varying vec4 fragcolor;
+
+	vec3 clamp(vec3 a){
+    	for(int i = 0; i < 3; i++)
+    		a[i] = clamp(a[i], 0.0, a[i]);
+    	return a;
+	}
+
+	void main(void) {
+		vec4 worldPos = uMVMatrix * vec4(aVertexPosition, 1.0);
+	    gl_Position = uPMatrix * worldPos;
+
+	    vec3 N = normalize((vec4(aVertexNormal, 1.0) * invMatrix).xyz);
+	    vec3 V = normalize(vec3(0) - worldPos.xyz);
+
+	    const float Ia = 0.2;
+
+		// ambients
+		vec3 I_amb = vec3(Ia * Ka);
+		vec3 I_diff = vec3(0.0);
+		vec3 I_spec = vec3(0.0);
+
+    	for(int i = 0; i < 3; i++){
+    		vec3 L = normalize(LightSource[i] - worldPos.xyz);	    
+			vec3 H = normalize(L+V);
+
+			// diffuse
+			I_diff += clamp(Kd * Ip[i] * dot(N,L));
+
+			// specular	    
+			float COS = clamp(dot(N, H), 0.0, 1.0);
+			I_spec += Ks * Ip[i] * pow(COS, n);
+    	}    	
+
+        fragcolor = vec4((I_diff+I_amb+I_spec) * aFrontColor, 1.0);
+	}
+</script>
+
+<script id="phongFrag" type="fragment">
+	precision mediump float;    
+
+	uniform vec3 LightSource[3];
+	uniform vec3 Ip[3];
+
+	uniform float Ka;
+	uniform float Kd;
+	uniform float Ks;
+	uniform float n;
+
+	varying vec4 worldPos;
+
+	varying vec3 interpN;
+	varying vec3 fragColor;
+
+	vec3 clamp(vec3 a){
+    	for(int i = 0; i < 3; i++)
+    		a[i] = clamp(a[i], 0.0, a[i]);
+    	return a;
+	}
+
+	void main(void) {
+		vec3 V = normalize(vec3(0) - worldPos.xyz);
+	    vec3 N = normalize(interpN);
+
+	    const float Ia = 0.2;
+
+		// ambients
+		vec3 I_amb = vec3(Ia * Ka);
+		vec3 I_diff = vec3(0.0);
+		vec3 I_spec = vec3(0.0);
+
+    	for(int i = 0; i < 3; i++){
+    		vec3 L = normalize(LightSource[i] - worldPos.xyz);	    
+			vec3 H = normalize(L+V);
+
+			// diffuse
+			I_diff += clamp(Kd * Ip[i] * dot(N,L));
+
+			// specular	    
+			float COS = clamp(dot(N, H), 0.0, 1.0);
+			I_spec += Ks * Ip[i] * pow(COS, n);
+    	}    	
+
+        gl_FragColor = vec4((I_diff+I_amb+I_spec) * fragColor.rgb, 1.0);
+	}
+</script>
+
+<script id="phongVert" type="vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec3 aVertexNormal;
+	attribute vec3 aFrontColor;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat4 invMatrix;
+
+	varying vec4 worldPos;
+
+	varying vec3 interpN;
+	varying vec3 fragColor;
+
+	void main(void) {
+		worldPos = uMVMatrix * vec4(aVertexPosition, 1.0);
+	    gl_Position = uPMatrix * worldPos;
+
+		interpN = normalize((vec4(aVertexNormal, 1.0) * invMatrix).xyz);
+	    fragColor = aFrontColor.rgb;
+	}
+</script>
+
+
+<script id="toonFrag" type="fragment">
+	precision mediump float;    
+
+	uniform vec3 LightSource[3];
+	uniform vec3 Ip[3];
+
+	uniform float Ka;
+	uniform float Kd;
+	uniform float Ks;
+	uniform float n;
+
+	varying vec4 worldPos;
+
+	varying vec3 interpN;
+	varying vec3 fragColor;
+
+	vec3 clamp(vec3 a){
+    	for(int i = 0; i < 3; i++)
+    		a[i] = clamp(a[i], 0.0, a[i]);
+    	return a;
+	}
+	vec3 stepvec(vec3 a){
+    	const float stp = 0.25;
+    	const float cap = 5.0;    	
+    	const float dil = 0.75;   	
+    	// cap(x/cap)^(1/dil)
+    	for(int i = 0; i < 3; i++)
+    		a[i] = floor(pow(clamp(a[i], 0.0, cap)/cap, dil)*cap/stp)*stp;
+    	return a;
+	}
+
+	void main(void) {
+		vec3 V = normalize(vec3(0) - worldPos.xyz);
+	    vec3 N = normalize(interpN);
+
+	    const float Ia = 0.2;
+
+		// ambients
+		vec3 I_amb = vec3(Ia * Ka);
+		vec3 I_diff = vec3(0.0);
+		vec3 I_spec = vec3(0.0);
+
+    	for(int i = 0; i < 3; i++){
+    		vec3 L = normalize(LightSource[i] - worldPos.xyz);	    
+			vec3 H = normalize(L+V);
+
+			// diffuse
+			I_diff += clamp(Kd * Ip[i] * dot(N,L));
+
+			// specular	    
+			float COS = clamp(dot(N, H), 0.0, 1.0);
+			I_spec += Ks * Ip[i] * pow(COS, n);
+    	}    	
+
+        gl_FragColor = vec4(stepvec((I_diff+I_amb+I_spec) * fragColor.rgb), 1.0);
+	}
+</script>
+
+<script id="toonVert" type="vertex">
+	attribute vec3 aVertexPosition;
+	attribute vec3 aVertexNormal;
+	attribute vec3 aFrontColor;
+
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat4 invMatrix;
+
+	varying vec4 worldPos;
+
+	varying vec3 interpN;
+	varying vec3 fragColor;
+
+	void main(void) {
+		worldPos = uMVMatrix * vec4(aVertexPosition, 1.0);
+	    gl_Position = uPMatrix * worldPos;
+
+		interpN = normalize((vec4(aVertexNormal, 1.0) * invMatrix).xyz);
+	    fragColor = aFrontColor.rgb;
+	}
+</script>
+
+
+<script type="text/javascript" src="animation.js"></script>
+
+</head>
+
+
+<body onload="webGLStart();">
+  
+    <canvas id="ICG-canvas" style="border: none;" width="800" height="600"></canvas>
+    <br/>
+    <button onclick="change_spin(-0.03)">&larr;</button>
+    <button onclick="change_spin(0.03)">&rarr;</button>
+    <button onclick="change_spin(0)">Stop</button>
+    <button onclick="reset()">Reset</button>
+    <br/>
+    <div class="slidecontainer">
+       	<select id="sel_model" onchange="resetslide()">
+          <option value="0" id="model_0">EMPTY</option>
+          <option value="1" id="model_1">EMPTY</option>
+          <option value="2" id="model_2">EMPTY</option>
+        </select>
+        <select id="sel_shader" onchange="changeShader()">
+          <option value="flat">Flat Shading</option>
+          <option value="gouraud">Gouraud Shading</option>
+          <option value="phong">Phong Shading</option>
+          <option value="toon">Toon Shading</option>
+        </select>
+        <select id="sel_transform" onchange="resetslide()">
+          <option value="scale">Scale</option>
+          <option value="trans">Translation</option>
+          <option value="rot">Rotation</option>
+          <option value="shear">Shear</option>
+        </select>        
+
+        <br/>
+        <input type="range" min="1" max="1000" value="500" id="slide_x" oninput="changeSlide(this)">
+        <input type="range" min="1" max="1000" value="500" id="slide_y" oninput="changeSlide(this)">
+        <input type="range" min="1" max="1000" value="500" id="slide_z" oninput="changeSlide(this)">
+    </div>
+    <!-- <a href="https://www.csie.ntu.edu.tw/~b05902064/hidden/">compare</a> -->
+    
+
+</body>
+
+</html>
