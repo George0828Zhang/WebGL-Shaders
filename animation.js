@@ -91,12 +91,6 @@ function initShaders(fileNoExtend) {
     shaderProgram.specDeviateUniform = gl.getUniformLocation(shaderProgram, "n");
 }
 
-function changeShader(){
-    var stype = document.getElementById("sel_shader").value;
-    shaderProgram = shaderProgram_dict[stype];
-    gl.useProgram(shaderProgram);
-}
-
 var mvMatrix = mat4.create();
 var mvMatrixStack = [];
 var pMatrix = mat4.create();
@@ -221,6 +215,7 @@ const tres_default = [2, 0, -5];
 
 var all_reflect_params = [[],[],[]];
 var all_default = [uno_default, des_default, tres_default];
+var all_shader_name = [];
 var all_trans = [[],[],[]];
 var all_scale = [[],[],[]];
 var all_rot = [[],[],[]];
@@ -233,6 +228,15 @@ var spinAngle = 180;
 var spinInterval = 0.03;
 var rgb = [1., 0., 0.];
 
+function changeShader(){
+	var model = document.getElementById("sel_model").value;
+    var stype = document.getElementById("sel_shader").value;
+    all_shader_name[model] = stype;
+}
+function resetmodelshader(){	
+	var model = document.getElementById("sel_model").value;
+    document.getElementById("sel_shader").value = all_shader_name[model];
+}
 function resetslide(){
     var xx = document.getElementById("slide_x");
     var yy = document.getElementById("slide_y");
@@ -336,6 +340,7 @@ function reset(){
         all_scale[i] = [1.0, 1.0, 1.0];
         all_rot[i] = [90, 180, 0];
         all_shear[i] = [0, 0, 0];
+        all_shader_name[i] = "flat";
     }
     for (var i = 0; i < lamp_pos.length; i++){
         lamp_pos[i] = [0.,0.,0.];
@@ -355,7 +360,6 @@ function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // SetLights([[0., 2., -1.], [2., 5., -5.], [5., 0., -5.]], [[1.0,1.0,1.0], rgb, [3.0,3.0,3.0]]);
-    SetLights(lamp_pos, lamp_rgb);
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 150.0, pMatrix);
     mat4.identity(mvMatrix);
 
@@ -363,6 +367,7 @@ function drawScene() {
         if (VertexPositionBuffer[i] == null || VertexNormalBuffer[i] == null || VertexFrontColorBuffer[i] == null || VertexBackColorBuffer[i] == null) {
            return;
         }
+        
 
         var scale, trans, dft, rot, shear;
 
@@ -371,7 +376,10 @@ function drawScene() {
         dft = all_default[i];
         rot = all_rot[i];
         shear = all_shear[i];
-
+        shaderProgram = shaderProgram_dict[all_shader_name[i]];
+    	gl.useProgram(shaderProgram);
+    	SetLights(lamp_pos, lamp_rgb);
+    
         PushMatrices();
 
         // mat4.identity(mvMatrix);

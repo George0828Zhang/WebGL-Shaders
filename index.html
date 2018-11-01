@@ -308,15 +308,10 @@
     <button onclick="change_spin(0.03)">&rarr;</button>
     <button onclick="change_spin(0)">Stop</button>
     <button onclick="reset()">Reset</button>
-    <select id="sel_shader" onchange="changeShader()">
-          <option value="flat">Flat Shading</option>
-          <option value="gouraud">Gouraud Shading</option>
-          <option value="phong">Phong Shading</option>
-          <option value="toon">Toon Shading</option>
-        </select>
+    
     <br/>
     <div class="slidecontainer">
-       	<select id="sel_model" onchange="resetslide()">
+       	<select id="sel_model" onchange="resetslide();resetmodelshader();">
           <option value="0" id="model_0">EMPTY</option>
           <option value="1" id="model_1">EMPTY</option>
           <option value="2" id="model_2">EMPTY</option>
@@ -326,7 +321,13 @@
           <option value="trans">Translation</option>
           <option value="rot">Rotation</option>
           <option value="shear">Shear</option>
-        </select>        
+        </select>   
+        <select id="sel_shader" onchange="changeShader()">
+          <option value="flat">Flat Shading</option>
+          <option value="gouraud">Gouraud Shading</option>
+          <option value="phong">Phong Shading</option>
+          <option value="toon">Toon Shading</option>
+        </select>     
 
         <br/>
         <input type="range" min="1" max="1000" value="500" id="slide_x" oninput="changeSlide(this)">
